@@ -25,6 +25,29 @@
   <link rel="stylesheet" href="style.css" />
   <script src="app.js" defer></script>
 </head>
+	
+	<script>
+		(async function loadSections() {
+		  const container = document.getElementById('content');
+		  try {
+		    const res = await fetch('sections/manifest.json', { cache: 'no-store' });
+		    const files = await res.json();
+		
+		    for (const file of files) {
+		      const r = await fetch(file, { cache: 'no-store' });
+		      const html = await r.text();
+		      container.insertAdjacentHTML('beforeend', html);
+		    }
+		
+		    // jei turi logiką, kuri turi persiskaičiuoti po įkėlimo:
+		    // initSearch(); initScrollSpy(); etc.
+		  } catch (e) {
+		    container.innerHTML = '<p>Nepavyko užkrauti turinio.</p>';
+		    console.error(e);
+		  }
+		})();
+	</script>
+	
 <body>
   <header class="topbar">
     <button class="menu-toggle" onclick="toggleMenu()">☰</button>

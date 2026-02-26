@@ -1,4 +1,4 @@
-const APP_VERSION = "v1.1.0";
+const APP_VERSION = "v1.1.1";
 
 // Reloadinam puslapį kai naujas SW perima kontrolę (turi būti prieš register!)
 navigator.serviceWorker.addEventListener("controllerchange", () => {

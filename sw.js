@@ -4,9 +4,9 @@ const ASSETS = [
   "style.css",
   "app.js",
   "manifest.json",
-  "icons/icon-192.png",
-  "icons/icon-512.png",
-  "icons/icon-maskable.png"
+  "icons/icon-192.webp",
+  "icons/icon-512.webp",
+  "icons/icon-maskable.webp"
 ];
 
 // Išsaugoti naują cache + priverstinai perimti valdymą

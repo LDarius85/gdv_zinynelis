@@ -172,3 +172,36 @@ function showNoUpdateNotification() {
     toast.remove();
   }, 3000);
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadSections();
+});
+
+async function loadSections() {
+  const container = document.getElementById('content');
+  if (!container) {
+    console.error('Neradau #content. Patikrink ar yra <main id="content">');
+    return;
+  }
+
+  try {
+    const res = await fetch('sections/manifest.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`Manifest fetch failed: ${res.status} ${res.statusText}`);
+
+    const files = await res.json();
+
+    for (const file of files) {
+      const r = await fetch(file, { cache: 'no-store' });
+      if (!r.ok) throw new Error(`Section fetch failed (${file}): ${r.status} ${r.statusText}`);
+
+      const html = await r.text();
+      container.insertAdjacentHTML('beforeend', html);
+    }
+
+    // jei turi init po įkėlimo, kviesk čia:
+    // initSearch(); initScrollSpy(); ...
+  } catch (e) {
+    container.innerHTML = '<p>Nepavyko užkrauti turinio.</p>';
+    console.error(e);
+  }
+}

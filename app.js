@@ -1,4 +1,18 @@
-const APP_VERSION = "v1.0.0";
+let APP_VERSION = "dev"; // fallback jei nepavyksta parsisiųsti
+
+async function loadVersion() {
+  try {
+    const res = await fetch("version.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("version.json fetch failed");
+    const data = await res.json();
+    if (data && data.version) APP_VERSION = data.version;
+  } catch (e) {
+    console.warn("[App] Nepavyko užkrauti version.json, naudoju fallback:", APP_VERSION);
+  }
+
+  const v = document.querySelector(".version");
+  if (v) v.textContent = APP_VERSION;
+}
 
 // Reloadinam puslapį kai naujas SW perima kontrolę (turi būti prieš register!)
 navigator.serviceWorker.addEventListener("controllerchange", () => {
@@ -8,7 +22,7 @@ navigator.serviceWorker.addEventListener("controllerchange", () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   const v = document.querySelector(".version");
-  if (v) v.textContent = APP_VERSION;
+  loadVersion();
 
   const menuBtn = document.getElementById("menuButton");
   if (menuBtn) {
@@ -74,11 +88,22 @@ function filterSections() {
 	if (filter && shouldShow) {
 	  const regex = new RegExp(`(${filter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, "gi");
 
-	  // Saugom <img> žymas
-	  section.innerHTML = section.innerHTML
-		.replace(/<img[^>]*>/g, match => `[[[IMG:${btoa(match)}]]]`) // Kodavimas į saugią formą
-		.replace(regex, '<span class="highlight">$1</span>') // Pažymim tekstą
-		.replace(/\[\[\[IMG:(.*?)\]\]\]/g, (m, code) => atob(code)); // Grąžinam atgal <img>
+	  const imgs = [];
+	  let html = section.innerHTML;
+
+	  // 1) išimam <img> į laikinas žymes be jokio base64
+	  html = html.replace(/<img\b[^>]*>/gi, (match) => {
+		imgs.push(match);
+		return `[[[IMG:${imgs.length - 1}]]]`;
+	  });
+
+	  // 2) highlightinam tik tekstą
+	  html = html.replace(regex, '<span class="highlight">$1</span>');
+
+	  // 3) grąžinam <img> atgal
+	  html = html.replace(/\[\[\[IMG:(\d+)\]\]\]/g, (m, idx) => imgs[Number(idx)] ?? m);
+
+	  section.innerHTML = html;
 	}
   });
 }

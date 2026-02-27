@@ -1,43 +1,40 @@
-const CACHE_NAME = "v1.0.0";
-const ASSETS = [
-  "index.html",
-  "style.css",
-  "app.js",
-  "manifest.json",
-  "icons/icon-192.webp",
-  "icons/icon-512.webp",
-  "icons/icon-maskable.webp"
-];
+let CACHE_NAME = "gdv-cache-dev";
 
-// Išsaugoti naują cache + priverstinai perimti valdymą
-self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
-  );
-  //self.skipWaiting();
-});
-
-// Aktyvuojant – ištrinti senus cache'us
-self.addEventListener("activate", event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-      )
-    ).then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener("message", event => {
-  if (event.data && event.data.action === "skipWaiting") {
-    console.log("[SW] Gauta skipWaiting komanda");
-    self.skipWaiting();
+async function getVersion() {
+  try {
+    const res = await fetch("version.json", { cache: "no-store" });
+    const data = await res.json();
+    return data.version || "dev";
+  } catch {
+    return "dev";
   }
+}
+
+self.addEventListener("install", (event) => {
+  event.waitUntil((async () => {
+    const v = await getVersion();
+    CACHE_NAME = `gdv-cache-${v}`;
+    self.skipWaiting();
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll([
+      "./",
+      "./index.html",
+      "./app.js",
+      "./styles.css",
+      "./sections/manifest.json",
+      "./version.json"
+    ]);
+  })());
 });
 
-// Fetch handler
-self.addEventListener("fetch", event => {
-  event.respondWith(
-    caches.match(event.request).then(resp => resp || fetch(event.request))
-  );
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    const v = await getVersion();
+    const current = `gdv-cache-${v}`;
+    const keys = await caches.keys();
+    await Promise.all(
+      keys.map(k => (k !== current ? caches.delete(k) : Promise.resolve()))
+    );
+    await self.clients.claim();
+  })());
 });

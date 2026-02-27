@@ -292,3 +292,10 @@ hr + p {
 table hr {
   margin: 2px 2px;
 }
+
+#section45 img{
+  width: 90px !important;
+  height: auto !important;
+  display: block;
+  margin: 0 auto;
+}
